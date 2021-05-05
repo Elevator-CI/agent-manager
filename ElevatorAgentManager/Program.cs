@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace ElevatorAgentManager
+namespace Elevator.Agent.Manager
 {
     public class Program
     {
@@ -15,7 +15,10 @@ namespace ElevatorAgentManager
         {
             return Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(ConfigureLogging)
-                .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
         }
 
         private static void ConfigureLogging(ILoggingBuilder builder)
