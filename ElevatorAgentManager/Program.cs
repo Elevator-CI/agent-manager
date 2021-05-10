@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Elevator.Agent.Manager
+namespace Elevator.Agent.Manager.Api
 {
+    [UsedImplicitly]
     public class Program
     {
         public static void Main(string[] args)

@@ -1,3 +1,5 @@
+using Elevator.Agent.Manager.Api.Hosting;
+using Elevator.Agent.Manager.Api.Hosting.StartAgents;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -5,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
-namespace Elevator.Agent.Manager
+namespace Elevator.Agent.Manager.Api
 {
     public class Startup
     {
@@ -18,9 +20,13 @@ namespace Elevator.Agent.Manager
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<StartAgentServiceConfig>(configuration.GetSection("StartAgentService"));
+
             services.AddLogging();
 
             services.AddControllers();
+
+            services.AddHostedService<StartAgentService>();
 
             services.AddSwaggerGen(c =>
             {
