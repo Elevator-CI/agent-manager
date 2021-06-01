@@ -16,12 +16,14 @@ namespace Elevator.Agent.Manager.Runner
         private readonly AgentRunnerConfiguration configuration;
         private readonly ILoggerFactory loggerFactory;
         private readonly ILogger<AgentRunner> logger;
+        private readonly ShellRunner shellRunner;
 
         public AgentRunner(AgentRunnerConfiguration configuration, ILoggerFactory loggerFactory)
         {
             this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             this.loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
             logger = loggerFactory.CreateLogger<AgentRunner>();
+            shellRunner = new ShellRunner();
         }
 
         public async Task<OperationResult<IReadOnlyCollection<AgentInformation>>> RunAgentsAsync(
@@ -31,7 +33,11 @@ namespace Elevator.Agent.Manager.Runner
             var getAgentRepositoryResult = await GetAgentGitRepositoryAsync(workingDirectory);
 
             if (!getAgentRepositoryResult.IsSuccessful)
-                return OperationResult<IReadOnlyCollection<AgentInformation>>.InternalServerError(getAgentRepositoryResult.Error);
+                return OperationResult<IReadOnlyCollection<AgentInformation>>.Failed(getAgentRepositoryResult.Error);
+
+            var buildAgentResult = await BuildAgentAsync(getAgentRepositoryResult.Value);
+            if (!buildAgentResult.IsSuccessful)
+                return OperationResult<IReadOnlyCollection<AgentInformation>>.Failed(buildAgentResult.Error);
 
             var result = new List<AgentInformation>();
 
@@ -39,12 +45,16 @@ namespace Elevator.Agent.Manager.Runner
             {
                 var runAgentResult = await RunAgentAsync(startAgentInformation, getAgentRepositoryResult.Value);
                 if (!runAgentResult.IsSuccessful)
-                    return OperationResult<IReadOnlyCollection<AgentInformation>>.InternalServerError(runAgentResult.Error);
+                {
+                    return OperationResult<IReadOnlyCollection<AgentInformation>>.Failed(runAgentResult.Error);
+                }
+                    
                 result.Add(runAgentResult.Value);
             }
 
-            return OperationResult<IReadOnlyCollection<AgentInformation>>.Ok(result);
+            return OperationResult<IReadOnlyCollection<AgentInformation>>.Success(result);
         }
+
 
         private string GetTempWorkingDirectory()
         {
@@ -62,46 +72,42 @@ namespace Elevator.Agent.Manager.Runner
 
             var gitProjectInformation =
                 new GitProjectInformation(agentUrl, "", workingDirectory, Guid.NewGuid().ToString());
-            var repository = new GitProject(gitProjectInformation, loggerFactory);
+            var repository = new GitProject(gitProjectInformation, loggerFactory, shellRunner);
 
             var cloneResult = await repository.CloneAsync();
 
             if (!cloneResult.IsSuccessful)
-                return OperationResult<GitRepository>.InternalServerError($"Cannot clone agent repository. Error message: '{cloneResult.Error}'");
+                return OperationResult<GitRepository>.Failed($"Cannot clone agent repository. Error message: '{cloneResult.Error}'");
 
-            return OperationResult<GitRepository>.Ok(cloneResult.Value);
+            return OperationResult<GitRepository>.Success(cloneResult.Value);
         }
 
         private async Task<OperationResult<AgentInformation>> RunAgentAsync(StartAgentInformation startAgentInformation, GitRepository agentRepository)
         {
-            var buildAgentResult = await BuildAgentAsync(agentRepository);
-            if (!buildAgentResult.IsSuccessful)
-                return OperationResult<AgentInformation>.InternalServerError(buildAgentResult.Error);
-
-            var shellRunner = new ShellRunner(new ShellRunnerArgs(agentRepository.Directory,
-                "docker", $"run -p {startAgentInformation.Port}:80 -d agent:latest"));
-            var runAgentResult = await shellRunner.RunAsync();
+            var args = new ShellRunnerArgs(agentRepository.Directory,
+                "docker", false, $"run -p {startAgentInformation.Port}:80 -d agent:latest");
+            var runAgentResult = await shellRunner.RunAsync(args);
 
             if (!runAgentResult.IsSuccessful)
-                return OperationResult<AgentInformation>.InternalServerError($"Cannot run container with agent. Error: {runAgentResult.Error}");
+                return OperationResult<AgentInformation>.Failed($"Cannot run container with agent. Error: {runAgentResult.Error}");
 
             logger.LogInformation(await runAgentResult.Value.Output.ReadToEndAsync());
 
-            return OperationResult<AgentInformation>.Ok(new AgentInformation(new Uri($"http://localhost:{startAgentInformation.Port}")));
+            return OperationResult<AgentInformation>.Success(new AgentInformation(new Uri($"http://localhost:{startAgentInformation.Port}")));
         }
 
         private async Task<VoidOperationResult> BuildAgentAsync(GitRepository agentRepository)
         {
-            var shellRunner = new ShellRunner(new ShellRunnerArgs(agentRepository.Directory,
-                "docker", $"build -f {Path.Combine("Elevator.Agent", "Dockerfile")} -t agent ."));
-            var buildAgentResult = await shellRunner.RunAsync();
+            var args = new ShellRunnerArgs(agentRepository.Directory,
+                "docker", false, $"build -f {Path.Combine("Elevator.Agent", "Dockerfile")} -t agent .");
+            var buildAgentResult = await shellRunner.RunAsync(args);
 
             if (!buildAgentResult.IsSuccessful)
-                return VoidOperationResult.InternalServerError($"Cannot build agent image. Error: '{buildAgentResult.Error}'");
+                return VoidOperationResult.Failed($"Cannot build agent image. Error: '{buildAgentResult.Error}'");
 
             logger.LogInformation(await buildAgentResult.Value.Output.ReadToEndAsync());
 
-            return VoidOperationResult.Ok();
+            return VoidOperationResult.Success();
         }
     }
 }

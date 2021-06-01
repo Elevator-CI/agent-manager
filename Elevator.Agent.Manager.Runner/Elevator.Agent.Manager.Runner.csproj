@@ -5,9 +5,9 @@
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Elevator.Common" Version="1.0.29" />
-		<PackageReference Include="Elevator.Utils.Git" Version="1.0.29" />
-		<PackageReference Include="Elevator.Utils.Shell" Version="1.0.29" />
+		<PackageReference Include="Elevator.Common" Version="1.0.37" />
+		<PackageReference Include="Elevator.Utils.Git" Version="1.0.37" />
+		<PackageReference Include="Elevator.Utils.Shell" Version="1.0.37" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
 	</ItemGroup>
 

@@ -20,6 +20,7 @@ namespace Elevator.Agent.Manager.Api
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls("https://localhost:10500");
                 });
         }
 

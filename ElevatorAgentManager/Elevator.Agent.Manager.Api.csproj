@@ -1,14 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>5e020d75-93e3-48b1-9401-ef3c254af15a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Elevator.Models" Version="1.0.29" />
-    <PackageReference Include="Elevator.Utils.Git" Version="1.0.29" />
-    <PackageReference Include="Elevator.Utils.Shell" Version="1.0.29" />
+    <PackageReference Include="Elevator.Models" Version="1.0.41" />
+    <PackageReference Include="Elevator.Repositopries" Version="1.0.41" />
+    <PackageReference Include="Elevator.Utils.Git" Version="1.0.41" />
+    <PackageReference Include="Elevator.Utils.Shell" Version="1.0.41" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.4" />
+    <PackageReference Include="Vostok.ClusterClient.Core" Version="0.1.28" />
   </ItemGroup>
 
   <ItemGroup>

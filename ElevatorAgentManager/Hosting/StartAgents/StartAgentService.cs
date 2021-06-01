@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Elevator.Agent.Manager.Api.AgentCommunication;
 using Elevator.Agent.Manager.Api.Utils;
 using Elevator.Agent.Manager.Runner;
 using Elevator.Agent.Manager.Runner.Configs;
@@ -16,10 +17,12 @@ namespace Elevator.Agent.Manager.Api.Hosting.StartAgents
         private readonly ILoggerFactory loggerFactory;
         private readonly ILogger<StartAgentService> logger;
         private readonly IOptions<StartAgentServiceConfig> configuration;
+        private readonly AgentsService agentsService;
 
-        public StartAgentService(IOptions<StartAgentServiceConfig> configuration, ILoggerFactory loggerFactory)
+        public StartAgentService(IOptions<StartAgentServiceConfig> configuration, ILoggerFactory loggerFactory, AgentsService agentsService)
         {
             this.loggerFactory = loggerFactory;
+            this.agentsService = agentsService;
             logger = loggerFactory.CreateLogger<StartAgentService>();
 
             this.configuration = configuration;
@@ -44,9 +47,12 @@ namespace Elevator.Agent.Manager.Api.Hosting.StartAgents
             {
                 foreach (var agentInformation in runAgentsResult.Value)
                 {
-                    logger.LogInformation(agentInformation.Url.ToString());
+                    agentsService.AddAgent(agentInformation);
+                    logger.LogInformation($"Started agent on {agentInformation.Url}");
                 }
             }
+
+            agentsService.Start();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
